@@ -1,22 +1,46 @@
-use clap::{App, Arg};
+use clap::Clap;
+// use rand::Rng;
+use rand::seq::SliceRandom;
 
-fn main() {
-    let matches = App::new("rpwgen")
-    .version("0.0.1")
-    .author("Kotaro Yamashita")
-    .about("Generate Passwords")
-    .arg(
-        Arg::with_name("length_of_password")
-        .value_name("LENGTH_OF_PASSWORD")
-        .short('l')
-        .long("length")
-        .index(1)
-        .required(false),
-    )
-    .get_matches();
+const LCASE: &'static [u8] = b"abcdefghijklmnopqrstuvwxyz";
+// const UCASE: &str  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+// const DIGITS: &str = "0123456789";
+// const SYMBOLS: &str = "!\"#$%&'()-=^~\\|@`[]{};:+*,./_<>?";
 
-    match matches.value_of("length_of_password") {
-        Some(length) => println!("length_of_password specified {}.", length),
-        None => println!("length_of_password is not specified.")
-    }
+#[derive(Clap, Debug)]
+#[clap(
+    name = "rpwgen",
+    version = "0.0.1",
+    author = "Kotaro Yamashita",
+    about = "Generats Strings for Password."
+)]
+struct Opts {
+    #[clap(name="LENGTH", short, long, default_value="12")]
+    length: usize,
+
+    #[clap(name="LOWERCASE", short, long)]
+    lower_case: bool,
+    
+    #[clap(name="UPPERCASE", short, long)]
+    upper_case: bool,
+    
+    #[clap(name="DIGITS", short, long)]
+    digits: bool,
+    
+    #[clap(name="SYMBOLS", short, long)]
+    symbols: bool,    
+}
+
+fn main() {    
+    let mut rng = rand::thread_rng();
+    let c = *LCASE.choose(&mut rng).unwrap();
+
+    // let mut v =Vec::new();
+    // for c in LC.chars() {
+    //     v.push(c);
+    // }
+    // let opts: Opts = Opts::parse();
+    // let index = opts.length;
+    // let c = &v[index];
+    println!("{}", c as char);    
 }
