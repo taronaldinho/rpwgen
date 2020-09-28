@@ -64,24 +64,58 @@ fn get_length(min: usize, max: usize, mu: usize, sigma2: f64) -> usize {
     }
 }
 
-fn decide_num_of_extructs(total_length:usize, lc: bool, uc: bool, di: bool, sy: bool) -> (usize, usize, usize, usize) {
-    let mut rng = rand::thread_rng();
-    let num_true: usize = vec![lc, uc, di, sy].iter().filter(|&x| *x).count();
-    let base_length:usize = total_length / num_true;
+fn decide_num_of_extructs(total_length:usize, lc: bool, uc: bool, di: bool, sy: bool) 
+        -> (usize, usize, usize, usize) {
+
+    // 各文字グループから抽出する文字数をタプルとして返す
+
+    let num_true: usize = vec![lc, uc, di, sy].iter().filter(|&x| *x).count(); // 抽出する文字グループの数
+    let base_length: usize = total_length / num_true;
+
+    let mut num_lc: usize = 0;
+    let mut num_uc: usize = 0;
+    let mut num_di: usize = 0;
+    let mut num_sy: usize = 0;
+    let mut remaining_groups = num_true;
     let mut remaining_length = total_length;
-
-    if lc {
-        let num_lc = get_length(1, remaining_length-num_true, base_length, 1.0);
-        remaining_length -= num_lc;
-    }
-     
-    if uc {
-        let num_uc = get_length(1, remaining_length-num_true+1, base_length, 1.0);
-        remaining_length -= num_uc;
-    }
-
-    let num_di = get_length(1, remaining_length-2, base_length, 1.0);
-    remaining_length -= num_di;
     
+    if lc {
+        if remaining_groups <= 1 {
+            num_lc = get_length(1, remaining_length-num_true, base_length, 1.0);
+            remaining_groups -= 1;
+            remaining_length -= num_lc;
+        } else {
+            num_lc = remaining_length;
+        }        
+    }
+    
+    if uc {
+        if remaining_groups <= 1 {
+            num_uc = get_length(1, remaining_length-num_true, base_length, 1.0);
+            remaining_groups -= 1;
+            remaining_length -= num_uc;
+        } else {
+            num_uc = remaining_length;
+        }        
+    }
+    
+    if di {
+        if remaining_groups <= 1 {
+            num_di = get_length(1, remaining_length-num_true, base_length, 1.0);
+            remaining_groups -= 1;
+            remaining_length -= num_di;
+        } else {
+            num_di = remaining_length;
+        }        
+    }
+    
+    if sy {
+        if remaining_groups <= 1 {
+            num_sy = get_length(1, remaining_length-num_true, base_length, 1.0);
+        } else {
+            num_sy = remaining_length;
+        }        
+    }
+
     (num_lc, num_uc, num_di, num_sy)
 }
