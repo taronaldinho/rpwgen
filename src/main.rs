@@ -10,7 +10,7 @@ const SYMBOLS: &'static [u8] = b"!\"#$%&'()-=^~\\|@`[]{};:+*,./_<>?";
 #[derive(Clap, Debug)]
 #[clap(
     name = "rpwgen",
-    version = "0.0.1",
+    version = "1.0.0",
     author = "Kotaro Yamashita",
     about = "Generats Strings for Password."
 )]
@@ -49,6 +49,8 @@ fn main() {
     let di: bool = opts.digits;
     let sy: bool = opts.symbols;
 
+    println!("{}", "");
+
     for _ in 0..(opts.num) {
         let (num_lc, num_uc, num_di, num_sy) = decide_num_of_extructs(total_length, lc, uc, di, sy);
 
@@ -62,8 +64,11 @@ fn main() {
 
         println!("{}", String::from_utf8(chars_vec).unwrap());
     }
+
+    println!("{}", "");
 }
 
+// 各文字グループから抽出する文字数をタプルとして返す
 fn decide_num_of_extructs(
     total_length: usize,
     lc: bool,
@@ -71,10 +76,8 @@ fn decide_num_of_extructs(
     di: bool,
     sy: bool,
 ) -> (usize, usize, usize, usize) {
-    // 各文字グループから抽出する文字数をタプルとして返す
-
     let num_false: usize = vec![lc, uc, di, sy].iter().filter(|&x| !*x).count(); // 抽出する文字グループの数
-    let base_length: usize = total_length / num_false;
+    let base_length: usize = total_length / num_false; // 抽出数の平均
 
     let mut num_lc: usize = 0;
     let mut num_uc: usize = 0;
@@ -83,9 +86,11 @@ fn decide_num_of_extructs(
     let mut remaining_groups = num_false;
     let mut remaining_length = total_length;
 
+    const SIGMA2: f64 = 2.0; // 抽出数の分散
+
     if !lc {
         if remaining_groups > 1 {
-            num_lc = get_length(1, remaining_length - remaining_groups, base_length, 2.0);
+            num_lc = get_length(1, remaining_length - remaining_groups, base_length, SIGMA2);
             remaining_groups -= 1;
             remaining_length -= num_lc;
         } else {
@@ -95,7 +100,7 @@ fn decide_num_of_extructs(
 
     if !uc {
         if remaining_groups > 1 {
-            num_uc = get_length(1, remaining_length - remaining_groups, base_length, 2.0);
+            num_uc = get_length(1, remaining_length - remaining_groups, base_length, SIGMA2);
             remaining_groups -= 1;
             remaining_length -= num_uc;
         } else {
@@ -105,7 +110,7 @@ fn decide_num_of_extructs(
 
     if !di {
         if remaining_groups > 1 {
-            num_di = get_length(1, remaining_length - remaining_groups, base_length, 2.0);
+            num_di = get_length(1, remaining_length - remaining_groups, base_length, SIGMA2);
             remaining_groups -= 1;
             remaining_length -= num_di;
         } else {
@@ -115,7 +120,7 @@ fn decide_num_of_extructs(
 
     if !sy {
         if remaining_groups > 1 {
-            num_sy = get_length(1, remaining_length - remaining_groups, base_length, 2.0);
+            num_sy = get_length(1, remaining_length - remaining_groups, base_length, SIGMA2);
         } else {
             num_sy = remaining_length;
         }
@@ -124,6 +129,7 @@ fn decide_num_of_extructs(
     (num_lc, num_uc, num_di, num_sy)
 }
 
+// 正規分布から抽出数を得る
 fn get_length(min: usize, max: usize, mu: usize, sigma2: f64) -> usize {
     let mut rng = rand::thread_rng();
     let normal = Normal::new(mu as f64, (sigma2 as f64).sqrt()).unwrap();
@@ -138,6 +144,7 @@ fn get_length(min: usize, max: usize, mu: usize, sigma2: f64) -> usize {
     }
 }
 
+// 指定した抽出数、文字グループから抽出する
 fn extruct_chars_vec(length: usize, char_group: &str) -> Vec<u8> {
     let mut rng = rand::thread_rng();
     let mut v: Vec<u8> = Vec::new();
@@ -163,5 +170,6 @@ fn extruct_chars_vec(length: usize, char_group: &str) -> Vec<u8> {
         let c: u8 = *target.choose(&mut rng).unwrap();
         v.push(c)
     }
+
     v
 }
