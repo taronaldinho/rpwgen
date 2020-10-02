@@ -7,47 +7,70 @@ const UCASE: &'static [u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const DIGITS: &'static [u8] = b"0123456789";
 const SYMBOLS: &'static [u8] = b"!\"#$%&'()-=^~\\|@`[]{};:+*,./_<>?";
 
+// clapによるコマンドライン引数設定
 #[derive(Clap, Debug)]
 #[clap(
     name = "rpwgen",
     version = "1.0.0",
     author = "Kotaro Yamashita",
-    about = "Generats Strings for Password."
+    about = "Generate some password strings."
 )]
 struct Opts {
     /// Length for each password strings
-    #[clap(name = "LENGTH", short = "L", long, default_value = "12")]
+    #[clap(
+        name = "LENGTH",
+        short = "L",
+        long,
+        default_value = "12",
+        display_order = 1
+    )]
     length: usize,
 
     /// Number of generating password strings
-    #[clap(name = "NUM", short = "N", long, default_value = "10")]
+    #[clap(
+        name = "NUM",
+        short = "N",
+        long,
+        default_value = "10",
+        display_order = 2
+    )]
     num: usize,
 
     /// No lowercase letters
-    #[clap(name = "LOWERCASE", short = "l", long)]
+    #[clap(name = "LOWERCASE", short = "l", long, display_order = 3)]
     lower_case: bool,
 
     /// No uppercase letters
-    #[clap(name = "UPPERCASE", short = "u", long)]
+    #[clap(name = "UPPERCASE", short = "u", long, display_order = 4)]
     upper_case: bool,
 
     /// No digits
-    #[clap(name = "DIGITS", short = "d", long)]
+    #[clap(name = "DIGITS", short = "d", long, display_order = 5)]
     digits: bool,
 
     /// No symbols
-    #[clap(name = "SYMBOLS", short = "s", long)]
+    #[clap(name = "SYMBOLS", short = "s", long, display_order = 6)]
     symbols: bool,
 }
 
 fn main() {
-    let mut rng = rand::thread_rng();
     let opts: Opts = Opts::parse();
-    let total_length: usize = opts.length;
     let lc: bool = opts.lower_case;
     let uc: bool = opts.upper_case;
     let di: bool = opts.digits;
     let sy: bool = opts.symbols;
+
+    if lc && uc && di && sy {
+        panic!(
+            "
+            The flags '-l', '-u', '-d', and '-s' are all turned on.
+            At least one of them must be turned off.
+            "
+        );
+    };
+
+    let mut rng = rand::thread_rng();
+    let total_length: usize = opts.length;
 
     println!("{}", "");
 
@@ -65,7 +88,7 @@ fn main() {
         println!("{}", String::from_utf8(chars_vec).unwrap());
     }
 
-    println!("{}", "");
+    // println!("{}", "");
 }
 
 // 各文字グループから抽出する文字数をタプルとして返す
@@ -172,4 +195,68 @@ fn extruct_chars_vec(length: usize, char_group: &str) -> Vec<u8> {
     }
 
     v
+}
+
+// 以下、関数の単体テスト
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_decide_num_of_extructs() {
+        let mut rng = rand::thread_rng();
+        let truth_val = vec![true, false];
+
+        for _ in 0..1000 {
+            let mut lc = *truth_val.choose(&mut rng).unwrap();
+            let mut uc = *truth_val.choose(&mut rng).unwrap();
+            let mut di = *truth_val.choose(&mut rng).unwrap();
+            let mut sy = *truth_val.choose(&mut rng).unwrap();
+
+            if lc && uc && di && sy {
+                let args = vec!["lc", "uc", "di", "sy"];
+                match *args.choose(&mut rng).unwrap() {
+                    "lc" => {
+                        lc = false;
+                    }
+                    "uc" => {
+                        uc = false;
+                    }
+                    "di" => {
+                        di = false;
+                    }
+                    "sy" => {
+                        sy = false;
+                    }
+                    _ => panic!(""),
+                };
+            }
+
+            let (num_lc, num_uc, num_di, num_sy) = decide_num_of_extructs(10, lc, uc, di, sy);
+
+            if lc {
+                assert_eq!(num_lc, 0)
+            } else {
+                assert_ne!(num_lc, 0)
+            };
+
+            if uc {
+                assert_eq!(num_uc, 0)
+            } else {
+                assert_ne!(num_uc, 0)
+            };
+
+            if di {
+                assert_eq!(num_di, 0)
+            } else {
+                assert_ne!(num_di, 0)
+            };
+
+            if sy {
+                assert_eq!(num_sy, 0)
+            } else {
+                assert_ne!(num_sy, 0)
+            };
+        }
+    }
 }
