@@ -6,12 +6,13 @@ const LCASE: &'static [u8] = b"abcdefghijklmnopqrstuvwxyz";
 const UCASE: &'static [u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const DIGITS: &'static [u8] = b"0123456789";
 const SYMBOLS: &'static [u8] = b"!\"#$%&'()-=^~\\|@`[]{};:+*,./_<>?";
+const SYMBOLS_BMWP: &'static [u8] = b"@#$%^*()_+=&-";
 
 // clapによるコマンドライン引数設定
 #[derive(Clap, Debug)]
 #[clap(
     name = "rpwgen",
-    version = "1.0.0",
+    version = "1.1.0",
     author = "Kotaro Yamashita",
     about = "Generate some password strings."
 )]
@@ -51,6 +52,10 @@ struct Opts {
     /// No symbols
     #[clap(name = "SYMBOLS", short = "s", long, display_order = 6)]
     symbols: bool,
+
+    /// Choose from char sets for Biz+Mail&Web
+    #[clap(name = "BMWP", short = "B", long, display_order = 7)]
+    symbols_for_bmwp: bool,
 }
 
 fn main() {
@@ -59,8 +64,13 @@ fn main() {
     let uc: bool = opts.upper_case;
     let di: bool = opts.digits;
     let sy: bool = opts.symbols;
+    let sb: bool = opts.symbols_for_bmwp;
 
-    if lc && uc && di && sy {
+    if sb {
+        println!(
+            "[INFORMATION] If '-B' is turned on, other flags ('-l', '-u', '-d', and '-s') are ignored."
+        );
+    } else if lc && uc && di && sy {
         panic!(
             "
             The flags '-l', '-u', '-d', and '-s' are all turned on.
@@ -73,23 +83,36 @@ fn main() {
     let total_length: usize = opts.length;
 
     println!("{}", "");
-
     for _ in 0..(opts.num) {
-        let (num_lc, num_uc, num_di, num_sy) = decide_num_of_extructs(total_length, lc, uc, di, sy);
+        let num_lc;
+        let num_uc;
+        let num_di;
+        let num_sy;
+
+        if sb {
+            (num_lc, num_uc, num_di, num_sy) =
+                decide_num_of_extructs(total_length, false, false, false, false);
+        } else {
+            (num_lc, num_uc, num_di, num_sy) = decide_num_of_extructs(total_length, lc, uc, di, sy);
+        }
 
         let mut chars_vec: Vec<u8> = Vec::new();
 
         chars_vec.append(&mut extruct_chars_vec(num_lc, "lc"));
         chars_vec.append(&mut extruct_chars_vec(num_uc, "uc"));
         chars_vec.append(&mut extruct_chars_vec(num_di, "di"));
-        chars_vec.append(&mut extruct_chars_vec(num_sy, "sy"));
+        if sb {
+            chars_vec.append(&mut extruct_chars_vec(num_sy, "sb"));
+        } else {
+            chars_vec.append(&mut extruct_chars_vec(num_sy, "sy"));
+        }
+
         chars_vec.shuffle(&mut rng);
 
         println!("{}", String::from_utf8(chars_vec).unwrap());
     }
-
-    // println!("{}", "");
 }
+
 
 // 各文字グループから抽出する文字数をタプルとして返す
 fn decide_num_of_extructs(
@@ -152,6 +175,7 @@ fn decide_num_of_extructs(
     (num_lc, num_uc, num_di, num_sy)
 }
 
+
 // 正規分布から抽出数を得る
 fn get_length(min: usize, max: usize, mu: usize, sigma2: f64) -> usize {
     let mut rng = rand::thread_rng();
@@ -166,6 +190,7 @@ fn get_length(min: usize, max: usize, mu: usize, sigma2: f64) -> usize {
         return num as usize;
     }
 }
+
 
 // 指定した抽出数、文字グループから抽出する
 fn extruct_chars_vec(length: usize, char_group: &str) -> Vec<u8> {
@@ -186,6 +211,9 @@ fn extruct_chars_vec(length: usize, char_group: &str) -> Vec<u8> {
         "sy" => {
             target = SYMBOLS;
         }
+        "sb" => {
+            target = SYMBOLS_BMWP;
+        }
         _ => panic!(""),
     }
 
@@ -196,6 +224,7 @@ fn extruct_chars_vec(length: usize, char_group: &str) -> Vec<u8> {
 
     v
 }
+
 
 // 以下、関数の単体テスト
 #[cfg(test)]
