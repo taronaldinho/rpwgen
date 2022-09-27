@@ -53,7 +53,7 @@ struct Opts {
     #[clap(name = "SYMBOLS", short = "s", long, display_order = 6)]
     symbols: bool,
 
-    /// Choose from char sets for Biz+Mail&Web
+    /// Select from a char set for Biz+Mail&Web
     #[clap(name = "BMWP", short = "B", long, display_order = 7)]
     symbols_for_bmwp: bool,
 }
